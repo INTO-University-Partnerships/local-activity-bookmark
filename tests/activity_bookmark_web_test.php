@@ -68,6 +68,24 @@ class activity_model_web_test extends advanced_testcase {
     }
 
     /**
+     * ensures the 'wantsurl' gets set if the user is not logged in when the first request is made
+     */
+    public function test_not_logged_in_sets_wantsurl() {
+        global $SESSION;
+
+        // logout user
+        $this->setUser(null);
+        $this->assertFalse(property_exists($SESSION, 'wantsurl'));
+
+        // make the request
+        $client = new Client($this->_app);
+        $client->request('GET', sprintf('/%d', $this->_course->id + 1));
+
+        // ensure the 'wantsurl' has been set
+        $this->assertTrue(property_exists($SESSION, 'wantsurl'));
+    }
+
+    /**
      * when the course does not exist, the user should receive a 404 response
      */
     public function test_get_course_does_not_exist() {
