@@ -29,7 +29,9 @@ Install [Composer](https://getcomposer.org/download/) if it isn't already.
     cd ..
     php admin/cli/upgrade.php
 
-Create a rewrite rule by adding the following to the site's Apache conf file:
+## Apache rewrite rule
+
+Add the following Apache rewrite rule:
 
     RewriteRule ^(/course/bookmark) /local/activity_bookmark/index.php?slug=$1 [QSA,L]
 
