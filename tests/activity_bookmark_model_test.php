@@ -68,7 +68,7 @@ class activity_bookmark_model_test extends advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
         $mods = [];
-        F\each(['quiz', 'forum', 'assignment'], function ($m) use ($course, &$mods) {
+        F\each(['quiz', 'forum', 'wiki'], function ($m) use ($course, &$mods) {
             $mods[$m] = $this->_create_module($m, $course);
         });
 
@@ -79,10 +79,10 @@ class activity_bookmark_model_test extends advanced_testcase {
                 ['id', 'edulevel', 'courseid', 'userid', 'contextid', 'contextlevel', 'contextinstanceid', 'action', 'timecreated'],
                 [1, 0, $course->id, $user->id, $mods['quiz']['contextid'], CONTEXT_MODULE, $mods['quiz']['id'], 'viewed', $now - 3],
                 [2, 0, $course->id, $user->id, $mods['forum']['contextid'], CONTEXT_MODULE, $mods['forum']['id'], 'viewed', $now - 1],
-                [3, 0, $course->id, $user->id, $mods['assignment']['contextid'], CONTEXT_MODULE, $mods['assignment']['id'], 'viewed', $now - 2],
+                [3, 0, $course->id, $user->id, $mods['wiki']['contextid'], CONTEXT_MODULE, $mods['wiki']['id'], 'viewed', $now - 2],
                 [4, 0, $course->id, $user->id, $mods['quiz']['contextid'], CONTEXT_MODULE, $mods['quiz']['id'], 'viewed', $now - 4],
                 [5, 0, $course->id, $user->id, $mods['forum']['contextid'], CONTEXT_MODULE, $mods['forum']['id'], 'viewed', $now - 5],
-                [6, 0, $course->id, $user->id, $mods['assignment']['contextid'], CONTEXT_MODULE, $mods['assignment']['id'], 'viewed', $now - 6],
+                [6, 0, $course->id, $user->id, $mods['wiki']['contextid'], CONTEXT_MODULE, $mods['wiki']['id'], 'viewed', $now - 6],
             ]
         ]));
         $actual = $this->_cut->get_most_recent_activity($user->id, $course->id, get_fast_modinfo($course->id));
@@ -196,6 +196,34 @@ class activity_bookmark_model_test extends advanced_testcase {
         $actual = $this->_cut->get_most_recent_activity($user->id, $course->id, get_fast_modinfo($course->id));
         $this->assertInternalType('array', $actual);
         $this->assertEquals(['quiz', $quiz['id']], $actual);
+    }
+
+    /**
+     * tests getting the most recent activity ignores mod/url instances
+     */
+    public function test_get_most_recent_activity_ignores_mod_url() {
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $mods = [];
+        F\each(['url', 'quiz'], function ($m) use ($course, &$mods) {
+            $mods[$m] = $this->_create_module($m, $course);
+        });
+
+        // create multiple entries in the logs (of which the most recent is an instance of mod/url)
+        $now = time();
+        $this->loadDataSet($this->createArrayDataSet([
+            'logstore_standard_log' => [
+                ['id', 'edulevel', 'courseid', 'userid', 'contextid', 'contextlevel', 'contextinstanceid', 'action', 'timecreated'],
+                [2, 0, $course->id, $user->id, $mods['url']['contextid'], CONTEXT_MODULE, $mods['url']['id'], 'viewed', $now - 3],
+                [3, 0, $course->id, $user->id, $mods['quiz']['contextid'], CONTEXT_MODULE, $mods['quiz']['id'], 'viewed', $now - 2],
+                [4, 0, $course->id, $user->id, $mods['url']['contextid'], CONTEXT_MODULE, $mods['url']['id'], 'viewed', $now - 1],
+                [5, 0, $course->id, $user->id, $mods['quiz']['contextid'], CONTEXT_MODULE, $mods['quiz']['id'], 'viewed', $now - 4],
+            ]
+        ]));
+        $actual = $this->_cut->get_most_recent_activity($user->id, $course->id, get_fast_modinfo($course->id));
+        $this->assertInternalType('array', $actual);
+        $this->assertNotEquals('url', F\head($actual));
+        $this->assertEquals(['quiz', $mods['quiz']['id']], $actual);
     }
 
     /**

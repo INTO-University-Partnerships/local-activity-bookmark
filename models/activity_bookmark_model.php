@@ -65,6 +65,7 @@ class activity_bookmark_model {
                 AND l.courseid = :courseid
                 AND l.action = 'viewed'
                 AND cm.id $in_sql
+                AND m.name != 'url'
             ORDER BY l.timecreated DESC
             LIMIT 1
 SQL;
